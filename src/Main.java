@@ -1,4 +1,4 @@
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.TimerTask;
 import java.util.concurrent.*;
@@ -35,29 +37,32 @@ public class Main extends JFrame {
     private JFileChooser destinationFileChooser;
     private JButton chooseFoldersButton;
     private JButton selectDestinationButton;
+    private JButton selectIgnoreFolders;
+    private ArrayList<String> ignores;
     private JButton copyButton;
     private File destinationPath;
-    private ArrayBlockingQueue<File> directoriesToCopy;
-    private SwingWorker<Void, Void> fileSearcher;
+    private File sourcePath;
     private JLabel filesCopied;
     private JTextArea log;
-    private int nrThreads;
-    private int workingThreads;
+    private CopyThreadManager manager;
 
     public Main() {
         super("Backa upp din skit");
-        nrThreads = 10;
-        workingThreads = 0;
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        }catch(Exception ex) {
+            ex.printStackTrace();
+        }
         mainPanel = new JPanel();
         log = new JTextArea(400,400);
+        ignores = new ArrayList<>();
         filesCopied = new JLabel("0");
-        directoriesToCopy = new ArrayBlockingQueue<>(1000);
         fileChooser = new JFileChooser();
         fileChooser.setMultiSelectionEnabled(true);
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         destinationFileChooser = new JFileChooser();
         destinationFileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        chooseFoldersButton = new JButton("Välj mappar");
+        chooseFoldersButton = new JButton("Välj mapp");
         chooseFoldersButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
@@ -65,13 +70,8 @@ public class Main extends JFrame {
                 if (ret == JFileChooser.APPROVE_OPTION) {
                     File[] files = fileChooser.getSelectedFiles();
                     for (File f : files) {
-                        try {
-                            directoriesToCopy.put(f);
-                            log.append("Selected: " + f.getAbsolutePath());
-                        } catch (InterruptedException e) {
-                            JOptionPane.showMessageDialog(mainPanel, e.getMessage());
-                            e.printStackTrace();
-                        }
+                        sourcePath = f;
+                        log.append("Selected: " + f.getAbsolutePath());
                     }
                 }
             }
@@ -91,30 +91,8 @@ public class Main extends JFrame {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 if (destinationPath != null) {
-                    while (!directoriesToCopy.isEmpty()) {
-                        try {
-                            CallbackFilter filter = new CallbackFilter() {
-                                @Override
-                                public boolean accept(File file) {
-                                    return new Date(file.lastModified()).before(new Date());
-                                }
-
-                                @Override
-                                public void fileFound(File f) {
-                                    SwingUtilities.invokeLater(new TimerTask() {
-                                        @Override
-                                        public void run() {
-                                            log.append("");
-                                        }
-                                    });
-                                }
-                            };
-                            copyFile(directoriesToCopy.take(), destinationPath, filter);
-                        } catch (IOException | InterruptedException e) {
-                            JOptionPane.showMessageDialog(mainPanel, e.getMessage());
-                            e.printStackTrace();
-                        }
-                    }
+                    manager = new CopyThreadManager(50,sourcePath,ignores,destinationPath.getAbsolutePath());
+                    manager.run();
                 } else {
                     JOptionPane.showMessageDialog(mainPanel, "Du måste välja filer att kopiera...");
                 }
@@ -134,7 +112,14 @@ public class Main extends JFrame {
     private void copyFile(File source, File destination, FileFilter filter) throws IOException {
         File dest = new File(destination.getPath() + "//" + source.getName());
         FileUtils.copyDirectory(source,dest, filter, true);
-        //FileUtils.copyDirectoryToDirectory();
+    }
+
+    private void copyFile(String source, String destination) throws IOException {
+        File src = new File(source);
+        File dest = new File(destination);
+        if(src.lastModified() != dest.lastModified()) {
+            Files.copy(src.toPath(), dest.toPath());
+        }
     }
 
     /**
