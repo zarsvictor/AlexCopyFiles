@@ -91,8 +91,22 @@ public class Main extends JFrame {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 if (destinationPath != null) {
-                    manager = new CopyThreadManager(50,sourcePath,ignores,destinationPath.getAbsolutePath());
-                    manager.run();
+                    int nrThread = 5;
+
+                    manager = new CopyThreadManager(nrThread, sourcePath,ignores,destinationPath.getAbsolutePath());
+                    /*manager.start();
+                    manager.shutDown();
+                    try {
+                        if (!manager.awaitTermination()) {
+                            JOptionPane.showMessageDialog(mainPanel, "Timeout");
+                        } else {
+                            JOptionPane.showMessageDialog(mainPanel, "Alla filer är kopierade nu");
+                        }
+                    } catch (InterruptedException e) {
+                        JOptionPane.showMessageDialog(mainPanel, "Error: " + e.getMessage());
+                    }*/
+                    //Thread thread = new Thread(manager);
+                    //thread.start();
                 } else {
                     JOptionPane.showMessageDialog(mainPanel, "Du måste välja filer att kopiera...");
                 }
@@ -130,7 +144,7 @@ public class Main extends JFrame {
     private static void createAndShowGUI() {
         //Create and set up the window.
         JFrame frame = new JFrame("FileChooserDemo");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         //Add content to the window.
         frame.add(new Main());
