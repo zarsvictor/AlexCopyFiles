@@ -47,6 +47,7 @@ public class Main extends JFrame {
     private JTextArea selectDestinationLabel;
     private JLabel filesCopied;
     private JTextArea log;
+    private JScrollPane logScroll;
 
     private ArrayList<String> ignores;
 
@@ -69,6 +70,8 @@ public class Main extends JFrame {
         log.setEditable(false);
         log.setLineWrap(true);
         log.setEnabled(false);
+        logScroll = new JScrollPane (log);
+        logScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         ignores = new ArrayList<>();
         filesCopied = new JLabel("Files copied: " + Integer.toString(nrFilesCopied));
         chooseFolderLabel = new JTextArea("Från");
@@ -198,28 +201,16 @@ public class Main extends JFrame {
             }
 
             );
-            mainPanel.setLayout(new
-
-            BorderLayout()
-
-            );
+            mainPanel.setLayout(new BorderLayout());
 
             JPanel chooseFoldersPanel = new JPanel();
-            chooseFoldersPanel.setLayout(new
-
-            BorderLayout()
-
-            );
+            chooseFoldersPanel.setLayout(new BorderLayout());
             //chooseFoldersPanel.setBorder(BorderFactory.createLineBorder(Color.black));
             chooseFoldersPanel.add(chooseFoldersButton,BorderLayout.PAGE_START);
             chooseFoldersPanel.add(chooseFolderLabel,BorderLayout.PAGE_END);
 
             JPanel selectDestinationPanel = new JPanel();
-            selectDestinationPanel.setLayout(new
-
-            BorderLayout()
-
-            );
+            selectDestinationPanel.setLayout(new BorderLayout());
             //selectDestinationPanel.setBorder(BorderFactory.createLineBorder(Color.black));
             selectDestinationPanel.add(selectDestinationButton,BorderLayout.PAGE_START);
             selectDestinationPanel.add(selectDestinationLabel,BorderLayout.PAGE_END);
@@ -232,7 +223,7 @@ public class Main extends JFrame {
             );
             //logPanel.setBorder(BorderFactory.createLineBorder(Color.black));
             logPanel.add(filesCopied);
-            logPanel.add(log);
+            logPanel.add(logScroll);
 
             JPanel buttons = new JPanel();
             buttons.add(chooseFoldersPanel);
